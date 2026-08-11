@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8085";
+const BASE_URL = "https://jal-rakhsha-1.onrender.com";
 let allLocations = [];
 let latestAssessment = null;
 
@@ -18,13 +18,13 @@ async function fetchAPI(path, options = {}) {
 async function getAllLocations() { return fetchAPI("/locations"); }
 
 async function loadLocationOptions() {
-    const select = document.getElementById("locationName");
+    const select = document.getElementById("locationId");
     try {
         allLocations = await getAllLocations();
         select.innerHTML = '<option value="">Select Location</option>';
         allLocations.forEach(l => {
             const option = document.createElement("option");
-            option.value = l.locationName;
+            option.value = l.id;
             option.textContent = `${l.locationName}, ${l.district}, ${l.state}`;
             select.appendChild(option);
         });
@@ -40,9 +40,9 @@ async function loadLocationOptions() {
 
 async function selectNearestStoredLocation(lat, lng) {
     const location = await fetchAPI(`/locations/nearest?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lng)}`);
-    const select = document.getElementById("locationName");
-    if (![...select.options].some(o => String(o.value).toLowerCase() === String(location.locationName).toLowerCase())) await loadLocationOptions();
-    select.value = location.locationName;
+    const select = document.getElementById("locationId");
+    if (![...select.options].some(o => String(o.value) === String(location.id))) await loadLocationOptions();
+    select.value = String(location.id);
     select.dispatchEvent(new Event("change"));
     return location;
 }
@@ -54,22 +54,22 @@ function showSelectedLocation(location) {
     box.innerHTML = `<strong>${escapeHtml(location.locationName)}</strong>, ${escapeHtml(location.district)}, ${escapeHtml(location.state)}<br>Environmental data loaded from database: Rainfall ${location.annualRainfall ?? "N/A"} mm, Soil ${escapeHtml(location.soilType ?? "N/A")}, Groundwater ${location.groundWaterDepth ?? "N/A"} m.`;
 }
 
-document.getElementById("locationName").addEventListener("change", () => {
-    const name = document.getElementById("locationName").value;
-    const location = allLocations.find(l => String(l.locationName).toLowerCase() === String(name).toLowerCase());
+document.getElementById("locationId").addEventListener("change", () => {
+    const id = document.getElementById("locationId").value;
+    const location = allLocations.find(l => String(l.id) === String(id));
     showSelectedLocation(location);
 });
 
 async function submitAssessment() {
     const payload = {
         userName: document.getElementById("username").value.trim(),
-        locationName: document.getElementById("locationName").value,
+        locationId: Number(document.getElementById("locationId").value),
         roofArea: Number(document.getElementById("roofArea").value),
         roofType: document.getElementById("roofType").value,
         dwellers: Number(document.getElementById("dwellers").value),
         openSpace: Number(document.getElementById("openSpace").value || 0)
     };
-    if (!payload.locationName) { alert("Please select a location or use current location first."); return; }
+    if (!payload.locationId) { alert("Please select a location or use current location first."); return; }
     try {
         showLoading();
         const data = await fetchAPI("/assessments/generate", { method: "POST", body: JSON.stringify(payload) });
@@ -161,3 +161,4 @@ function showLoading() { const e=document.getElementById("loading"); if(e)e.styl
 function hideLoading() { const e=document.getElementById("loading"); if(e)e.style.display="none"; }
 
 document.addEventListener("DOMContentLoaded", loadLocationOptions);
+
