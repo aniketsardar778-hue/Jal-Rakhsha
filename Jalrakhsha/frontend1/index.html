@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaSave GIS - Rainwater Harvesting Assessment</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+<div id="loading" class="loading-overlay" style="display:none"><div class="spinner"></div></div>
+<header>
+    <div class="logo">💧 AquaSave GIS</div>
+    <nav>
+        <a href="#home">Home</a><a href="#assessment">Assessment</a><a href="#map">Map</a><a href="#results">Results</a><a href="#history">History</a>
+    </nav>
+</header>
+
+<section id="home" class="hero">
+    <h1>GIS-Based Rooftop Rainwater Harvesting</h1>
+    <p>Smart Decision Support System for Water Conservation & Artificial Groundwater Recharge</p>
+    <button id="startBtn" type="button">Start Assessment</button>
+</section>
+
+<section class="dashboard">
+    <div class="card"><i class="fa-solid fa-cloud-rain"></i><h2 id="rainfall">0 mm</h2><p>Rainfall</p></div>
+    <div class="card"><i class="fa-solid fa-house"></i><h2 id="dashRoofArea">0 m²</h2><p>Roof Area</p></div>
+    <div class="card"><i class="fa-solid fa-droplet"></i><h2 id="waterPotential">0 L</h2><p>Harvest Potential</p></div>
+    <div class="card"><i class="fa-solid fa-circle-check"></i><h2 id="score">0%</h2><p>Feasibility</p></div>
+</section>
+
+<section id="assessment">
+    <h2>Site Assessment Form</h2>
+    <p class="map-hint">Environmental values are NOT entered by the user. They come from the selected location's LocationData record in the backend database.</p>
+    <form id="assessmentForm">
+        <input id="username" type="text" placeholder="Username" required>
+        <select id="locationName" required><option value="">Select Location</option></select>
+        <div id="selectedLocationInfo" class="result-box" style="display:none"></div>
+        <input id="roofArea" type="number" min="1" step="0.01" placeholder="Roof Area (m²)" required>
+        <select id="roofType" required>
+            <option value="">Roof Type</option>
+            <option value="Concrete">Concrete</option>
+            <option value="RCC">RCC</option>
+            <option value="Metal">Metal</option>
+            <option value="Tiles">Tiles</option>
+            <option value="Asbestos">Asbestos</option>
+
+        </select>
+        <input id="dwellers" type="number" min="1" placeholder="Number of People" required>
+        <input id="openSpace" type="number" min="0" step="0.01" placeholder="Open Space (m²)">
+        <button type="submit">Calculate Assessment</button>
+    </form>
+</section>
+
+<section id="map">
+    <h2>GIS Map</h2>
+    <div id="mapContainer"></div>
+    <p class="map-hint">Click the map or use your current location. The system chooses the nearest location already stored in LocationData.</p>
+    <button id="locationBtn" type="button">Use Current Location</button>
+    <p id="gpsStatus" class="map-hint"></p>
+</section>
+
+<section id="results">
+    <h2>Assessment Results / Complete Feasibility Report</h2>
+    <div id="reportSection" class="result-box" style="display:none">
+        <p>Assessment ID: <span id="assessmentId">--</span></p>
+        <p>Username: <span id="reportUsername">--</span></p>
+        <p>Date: <span id="createdAt">--</span></p>
+
+        <h3>Selected Location</h3>
+        <p><span id="locationName">--</span>, <span id="district">--</span>, <span id="state">--</span></p>
+        <p>Coordinates: <span id="latitude">--</span>, <span id="longitude">--</span></p>
+
+        <h3>Environmental Data From Database</h3>
+        <p>Annual Rainfall: <span id="annualRainfall">--</span> mm</p>
+        <p>Groundwater Depth: <span id="groundwaterDepth">--</span> m</p>
+        <p>Soil Type: <span id="soilType">--</span></p>
+        <p>Aquifer Type: <span id="aquiferType">--</span></p>
+        <p>Recharge Potential: <span id="rechargePotential">--</span></p>
+
+        <h3>User Inputs Stored In Assessment</h3>
+        <p>Roof Area: <span id="reportRoofArea">--</span> m²</p>
+        <p>Roof Type: <span id="reportRoofType">--</span></p>
+        <p>Dwellers: <span id="reportDwellers">--</span></p>
+        <p>Open Space: <span id="reportOpenSpace">--</span> m²</p>
+
+        <h3>Backend Water Calculations</h3>
+        <p>Runoff Coefficient: <span id="runoffCoefficient">--</span></p>
+        <p>Annual Harvest Potential: <span id="harvestPotential">--</span> L/year</p>
+        <p>Annual Water Demand: <span id="waterDemand">--</span> L/year</p>
+        <p>Water Saving: <span id="waterSavingPercentage">--</span>%</p>
+        <p>Annual Surplus: <span id="annualSurplus">--</span> L</p>
+        <p>Annual Deficit: <span id="annualDeficit">--</span> L</p>
+        <p>Recharge Volume: <span id="rechargeVolume">--</span> L/year</p>
+
+        <h3>RTRWH Feasibility - All Values</h3>
+        <p>Rainfall Score: <span id="rainfallScore">--</span>/100</p>
+        <p>Roof Area Score: <span id="roofAreaScore">--</span>/100</p>
+        <p>Roof Type Score: <span id="roofTypeScore">--</span>/100</p>
+        <p>Demand Coverage Score: <span id="demandCoverageScore">--</span>/100</p>
+        <p>Collection Efficiency Score: <span id="collectionEfficiencyScore">--</span>/100</p>
+        <p><strong>RTRWH Score: <span id="rtrwhScore">--</span>/100 (<span id="rtrwhStatus">--</span>)</strong></p>
+
+        <h3>Groundwater Recharge Feasibility - All Values</h3>
+        <p>Soil Score: <span id="soilScore">--</span>/100</p>
+        <p>Open Space Score: <span id="openSpaceScore">--</span>/100</p>
+        <p>Aquifer Suitability Score: <span id="aquiferSuitabilityScore">--</span>/100</p>
+        <p>Groundwater Score: <span id="groundwaterScore">--</span>/100</p>
+        <p>Recharge Potential Score: <span id="rechargePotentialScore">--</span>/100</p>
+        <p><strong>Recharge Score: <span id="rechargeScore">--</span>/100 (<span id="rechargeStatus">--</span>)</strong></p>
+
+        <h3>Overall Feasibility</h3>
+        <p><strong>Overall Score: <span id="overallScore">--</span>/100</strong></p>
+        <p>Overall Status: <span id="overallStatus">--</span></p>
+
+        <h3>Recommendation</h3>
+        <p>Structure: <span id="recommendedStructure">--</span></p>
+        <p>Dimensions: <span id="recommendedDimensions">--</span></p>
+        <p>Capacity: <span id="recommendedCapacity">--</span> L</p>
+        <p>Suitability Score: <span id="recommendationSuitabilityScore">--</span>/100</p>
+        <p>Reason: <span id="recommendationReason">--</span></p>
+
+        <h3>Economic Feasibility</h3>
+        <p>Material Cost: <span id="materialCost">--</span></p>
+        <p>Labour Cost: <span id="labourCost">--</span></p>
+        <p>Excavation Cost: <span id="excavationCost">--</span></p>
+        <p>Maintenance Cost: <span id="maintenanceCost">--</span></p>
+        <p>Total Cost: <span id="totalCost">--</span></p>
+        <p>Annual Benefit: <span id="annualBenefit">--</span></p>
+        <p>Payback Period: <span id="paybackPeriodYears">--</span> years</p>
+        <p>ROI: <span id="roiPercentage">--</span>%</p>
+    </div>
+</section>
+
+<section id="history">
+    <h2>Assessment History</h2>
+    <input id="historyUsername" type="text" placeholder="Username" style="max-width:400px;margin:0 auto 20px;display:block">
+    <button id="loadHistoryBtn" type="button">Load History</button>
+    <div id="assessmentHistory"></div>
+</section>
+
+<section id="report"><h2>Generate Report</h2><button id="downloadBtn" type="button">Download / Print Complete Report</button></section>
+<footer><p>© 2026 AquaSave GIS</p></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="script.js"></script>
+<script src="script1 (2).js"></script>
+</body>
+</html>
