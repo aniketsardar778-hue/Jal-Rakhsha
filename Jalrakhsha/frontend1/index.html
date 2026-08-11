@@ -35,17 +35,15 @@
     <p class="map-hint">Environmental values are NOT entered by the user. They come from the selected location's LocationData record in the backend database.</p>
     <form id="assessmentForm">
         <input id="username" type="text" placeholder="Username" required>
-        <select id="locationName" required><option value="">Select Location</option></select>
+        <select id="locationId" required><option value="">Select Location</option></select>
         <div id="selectedLocationInfo" class="result-box" style="display:none"></div>
         <input id="roofArea" type="number" min="1" step="0.01" placeholder="Roof Area (m²)" required>
         <select id="roofType" required>
             <option value="">Roof Type</option>
             <option value="Concrete">Concrete</option>
-            <option value="RCC">RCC</option>
             <option value="Metal">Metal</option>
             <option value="Tiles">Tiles</option>
             <option value="Asbestos">Asbestos</option>
-
         </select>
         <input id="dwellers" type="number" min="1" placeholder="Number of People" required>
         <input id="openSpace" type="number" min="0" step="0.01" placeholder="Open Space (m²)">
